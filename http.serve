@@ -1,0 +1,39 @@
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import urllib.parse
+
+class CalculatorHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        parsed_path = urllib.parse.urlparse(self.path)
+        query_params = urllib.parse.parse_qs(parsed_path.query)
+
+        try:
+            num1 = float(query_params.get("num1", [0])[0])
+            num2 = float(query_params.get("num2", [0])[0])
+            operation = query_params.get("operation", [""])[0]
+
+            if operation == "add":
+                result = num1 + num2
+            elif operation == "subtract":
+                result = num1 - num2
+            elif operation == "multiply":
+                result = num1 * num2
+            elif operation == "divide":
+                result = num1 / num2 if num2 != 0 else "Ошибка: деление на ноль"
+            else:
+                result = "Неизвестная операция"
+
+            self.send_response(200)
+            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(f"<html><body><h2>Результат: {result}</h2></body></html>".encode("utf-8"))
+
+        except Exception as e:
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(f"Ошибка: {str(e)}".encode("utf-8"))
+
+if __name__ == "__main__":
+    server_address = ("", 8080)  # Сервер будет работать на порту 8080
+    httpd = HTTPServer(server_address, CalculatorHandler)
+    print("Сервер запущен на порту 8080...")
+    httpd.serve_forever()
